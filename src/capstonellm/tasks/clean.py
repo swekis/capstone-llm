@@ -3,11 +3,52 @@ import logging
 from pyspark.sql import SparkSession
 from capstonellm.common.catalog import llm_bucket
 from capstonellm.common.spark import ClosableSparkSession
+import pyarrow as pa
+import polars as pl
+import pandas
 
 logger = logging.getLogger(__name__)
 
 def clean(spark: SparkSession, environment: str, tag: str):
-    pass
+
+    df_questions_main = (pl.from_arrow(
+        pa.Table.from_batches(
+            spark.read.json("s3a://dataminded-academy-capstone-llm-data-us/input/dbt/questions.json")
+                ._collect_as_arrow()))
+                .explode("items")
+                .unnest("items")
+                .explode("tags")
+    )
+
+    df_answers_main = (pl.from_arrow(
+        pa.Table.from_batches(
+            spark.read.json("s3a://dataminded-academy-capstone-llm-data-us/input/dbt/answers.json")
+                ._collect_as_arrow()))
+                .explode("items")
+                .unnest("items")
+    )
+
+    df_questions_filter = df_questions_main.filter(
+            pl.col('tags') == 'dbt'
+        ).select(
+            pl.col('title'),
+            pl.col('body').alias('question'),
+            pl.col('question_id')
+        )
+
+    df_answers_filter = df_answers_main.select(
+            pl.col('body').alias('answer'),
+            pl.col('question_id')
+        )
+
+    df_qna = df_questions_filter.join(df_answers_filter, on='question_id').select(['title','question','answer'])
+
+    spark.conf.set("spark.sql.execution.arrow.pyspark.enabled", "true")
+    df_cleaned = spark.createDataFrame(df_qna.to_pandas())
+
+    df_cleaned.write.json("s3a://dataminded-academy-capstone-llm-data-us/cleaned/peter/dbt", mode='overwrite')
+
+
 
 def main():
     parser = argparse.ArgumentParser(description="capstone_llm")
