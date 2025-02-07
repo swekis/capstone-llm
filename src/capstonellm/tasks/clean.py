@@ -48,6 +48,8 @@ def clean(spark: SparkSession, environment: str, tag: str):
 
     df_cleaned.write.json("s3a://dataminded-academy-capstone-llm-data-us/cleaned/peter/dbt", mode='overwrite')
 
+    df_cleaned.show()
+
 
 
 def main():
