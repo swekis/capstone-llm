@@ -1,0 +1,15 @@
+docker:
+    path: .
+id: 3550299a-106f-4c88-977c-31ee43a016a5
+ide:
+    filename: ide.yaml
+name: capstonellm-peter
+resources:
+    path: resources
+streaming:
+    filename: streaming.yaml
+template: ""
+version: "0.3"
+workflows:
+    path: dags
+    version: "2"

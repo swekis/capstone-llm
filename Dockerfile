@@ -11,4 +11,4 @@ COPY . .
 
 RUN pip install .
 
-CMD uv run python3 -m src.capstonellm.tasks.clean
+# CMD python3 -m src.capstonellm.tasks.clean
